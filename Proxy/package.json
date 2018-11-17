@@ -1,0 +1,29 @@
+{
+  "name": "proxy_matt",
+  "version": "1.0.0",
+  "description": "Proxy to serve TopBunk application",
+  "main": "server.js",
+  "scripts": {
+    "server-node": "node ./server.js",
+    "server-dev": "nodemon ./server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TopBunkNYC/Proxy_Matt.git"
+  },
+  "author": "MLJ",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/TopBunkNYC/Proxy_Matt/issues"
+  },
+  "homepage": "https://github.com/TopBunkNYC/Proxy_Matt#readme",
+  "dependencies": {
+    "axios": "^0.18.0",
+    "body-parser": "^1.18.3",
+    "express": "^4.16.4",
+    "morgan": "^1.9.1",
+    "nodemon": "^1.18.5",
+    "path": "^0.12.7",
+    "pm2": "^3.2.2"
+  }
+}
