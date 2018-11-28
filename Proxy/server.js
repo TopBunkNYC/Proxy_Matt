@@ -1,6 +1,5 @@
 require('newrelic');
 const express = require('express');
-const morgan = require('morgan');
 const path = require('path');
 const axios = require('axios');
 const parser = require('body-parser');
@@ -12,7 +11,6 @@ const app = express();
 const port = 7001;
 
 app.use(parser.json());
-// app.use(morgan('dev'));
 app.use(express.static(path.join(__dirname, '/public')));
 
 app.all('/*', function(req, res, next) {
