@@ -1,4 +1,3 @@
-require('newrelic');
 const express = require('express');
 const path = require('path');
 const axios = require('axios');
@@ -165,47 +164,57 @@ app.get('/listings', function(req, res) {
     .then((results) => {
       let htmls = [];
       let props = [];
+      let flag = true;
       results.forEach(({data}) => {
-        htmls.push(data[0]);
-        props.push(data[1]);
+        if (data.success === false) {
+          flag = false;
+        } else {
+          htmls.push(data.ssr_html);
+          props.push(data.props);
+        }
       });
-      res.end(`
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-          <meta charset="UTF-8">
-          <title>TopBunk</title>
-          <link rel="stylesheet" type="text/css" href="/styles.css">
-          <!-- <link rel="stylesheet" type="text/css" href="http://18.216.104.91/guestBar.css"> -->
-          <!-- <link type="text/css" rel="stylesheet" href="http://18.218.27.164/style.css"> -->
-          <link rel="icon" type="image/png" href="https://s3.us-east-2.amazonaws.com/topbunk-profilephotos/favicon.ico">
-        </head>
-        <body>
-          <div id="description">${htmls[0]}</div>
-          <div class="container-left">
-            <div id="reviews"></div>
-            <div id="neighborhood"></div>
-          </div>
-          <div class=container-right>
-            <div id="booking"></div>
-          </div>
-          <script crossorigin src="https://unpkg.com/react@16.6.3/umd/react.development.js"></script>
-          <script crossorigin src="https://unpkg.com/react-dom@16.6.3/umd/react-dom.development.js"></script>
-          <script src="./bundles/Description.js"></script>
-          <script>
-            ReactDOM.hydrate(
-              React.createElement(Description, ${props[0]}),
-              document.getElementById('description')
-            );
-          </script>
-        </body>
-        </html>
-      `);
+      if (flag) {
+        res.end(`
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="UTF-8">
+            <title>TopBunk</title>
+            <link rel="stylesheet" type="text/css" href="/styles.css">
+            <!-- <link rel="stylesheet" type="text/css" href="http://18.216.104.91/guestBar.css"> -->
+            <!-- <link type="text/css" rel="stylesheet" href="http://18.218.27.164/style.css"> -->
+            <link rel="icon" type="image/png" href="https://s3.us-east-2.amazonaws.com/topbunk-profilephotos/favicon.ico">
+          </head>
+          <body>
+            <div id="description">${htmls[0]}</div>
+            <div class="container-left">
+              <div id="reviews"></div>
+              <div id="neighborhood"></div>
+            </div>
+            <div class=container-right>
+              <div id="booking"></div>
+            </div>
+            <script crossorigin src="https://unpkg.com/react@16.6.3/umd/react.development.js"></script>
+            <script crossorigin src="https://unpkg.com/react-dom@16.6.3/umd/react-dom.development.js"></script>
+            <script src="./bundles/Description.js"></script>
+            <script>
+              ReactDOM.hydrate(
+                React.createElement(Description, ${props[0]}),
+                document.getElementById('description')
+              );
+            </script>
+          </body>
+          </html>
+        `);
+      } else {
+        res.status(404).send();
+      }
     });
 });
 
-app.get('/*', (req, res) => {
-  res.sendFile(path.join(__dirname, './public/index.html'));
+const loaderio = process.env.loaderio || require('./config.js').loader;
+app.get(`/loaderio-${loaderio}`, (req, res) => {
+	res.send(`loaderio-${loaderio}`);
 });
 
 app.listen(port, () => {
