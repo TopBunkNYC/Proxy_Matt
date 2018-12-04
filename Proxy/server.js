@@ -1,13 +1,12 @@
 const express = require('express');
 const path = require('path');
 const axios = require('axios');
+// const redis = require('redis');
 const parser = require('body-parser');
-const fetch = require('node-fetch');
-const fs = require('fs');
-const services = require('./services.js');
-const components = {};
 const app = express();
 const port = 7001;
+
+// const client = redis.createClient({host: `${process.env.redis || require('./config.js').redis}`});
 
 app.use(parser.json());
 app.use(express.static(path.join(__dirname, '/public')));
@@ -17,11 +16,11 @@ app.all('/*', function(req, res, next) {
   next();
 });
 
-// Add DAVID's API endpoints
+// Add Neighborhood API endpoints
 app.get('/listingdata', (req, res) => {
   let requestId = req.query.id;
   requestId = requestId.slice(-3) * 1;
-  axios.get(`http://3.16.89.66/listingdata?id=${requestId}`)
+  axios.get(`${process.env.neighborhood || require('./config.js').neighborhood}/listingdata?id=${requestId}`)
     .then((results) => res.send(results.data))
     .catch((err) => console.error(err));
 });
@@ -29,7 +28,7 @@ app.get('/listingdata', (req, res) => {
 app.get('/neighborhooddata', (req, res) => {
   let requestId = req.query.id;
   requestId = requestId.slice(-3) * 1;
-  axios.get(`http://3.16.89.66/neighborhooddata?id=${requestId}`)
+  axios.get(`${process.env.neighborhood || require('./config.js').neighborhood}/neighborhooddata?id=${requestId}`)
     .then((results) => res.send(results.data))
     .catch((err) => console.error(err));
 });
@@ -37,14 +36,14 @@ app.get('/neighborhooddata', (req, res) => {
 app.get('/landmarkdata', (req, res) => {
   let lat = req.query.listingLat;
   let long = req.query.listingLong;
-  axios.get(`http://3.16.89.66/landmarkdata?listingLat=${lat}&listingLong=${long}`)
+  axios.get(`${process.env.neighborhood || require('./config.js').neighborhood}/landmarkdata?listingLat=${lat}&listingLong=${long}`)
     .then((results) => res.send(results.data))
     .catch((err) => console.error(err));
 });
 
-// Add STACY's API endpoints
+// Add Reviews API endpoints
 app.get('/ratings', (req, res) => {
-  axios.get(`http://18.218.27.164${req.url}`)
+  axios.get(`${process.env.reviews || require('./config.js').reviews}${req.url}`)
     .then((results) => {
       // console.log(results.data);
       res.send(results.data);
@@ -56,7 +55,7 @@ app.get('/ratings', (req, res) => {
 });
 
 app.get('/reviews', (req, res) => {
-  axios.get(`http://18.218.27.164${req.url}`)
+  axios.get(`${process.env.reviews || require('./config.js').reviews}${req.url}`)
     .then((results) => {
       // console.log(results.data);
       res.send(results.data);
@@ -68,7 +67,7 @@ app.get('/reviews', (req, res) => {
 });
 
 app.get('/search', (req, res) => {
-  axios.get(`http://18.218.27.164${req.url}`)
+  axios.get(`${process.env.reviews || require('./config.js').reviews}${req.url}`)
     .then((results) => {
       // console.log(results.data);
       res.send(results.data);
@@ -79,9 +78,9 @@ app.get('/search', (req, res) => {
     });
 });
 
-// Add Dev's API endpoints
+// Add Description API endpoints
 app.get('/description', (req, res) => {
-  axios.get(`http://localhost:7000${req.url}`)
+  axios.get(`${process.env.description || require('./config.js').description}${req.url}`)
     .then((results) => {
       res.send(results.data);
     })
@@ -91,10 +90,10 @@ app.get('/description', (req, res) => {
     });
 });
 
-// Add Louis's API endpoints
+// Add Booking API endpoints
 app.get('/bookinglisting/:id', (req, res)=>{ 
   let id = req.params.id;
-  axios.get(`http://18.216.104.91/bookinglisting/${id}`)
+  axios.get(`${process.env.booking || require('./config.js').booking}/bookinglisting/${id}`)
     .then((results) => {
       res.send(results.data);
     })
@@ -103,113 +102,251 @@ app.get('/bookinglisting/:id', (req, res)=>{
     });
 });
 
-// download bundles
-(() => {
-  let serviceNames = ['Description'];
-  serviceNames.forEach((service) => {
-    let url = path.join(__dirname, `/public/bundles/${service}.js`);
-    fs.access(url, (err) => {
-      if (err) {
-        fetch(services[service])
-          .then(response => {
-            const dest = fs.createWriteStream(url);
-            response.body.pipe(dest);
-            response.body.on('end', () => {
-              setTimeout(() => {
-                console.log('file written');
-              }, 0);
-            });
-          });
-      } else {
-        console.log('file exists');
-      }
-    });
-  });
-})();
-
-// download server bundles
-(() => {
-  let serviceNames = ['DescriptionServer'];
-  serviceNames.forEach((service) => {
-    let url = path.join(__dirname, `/public/bundles/${service}.js`);
-    fs.access(url, (err) => {
-      if (err) {
-        fetch(services[service])
-          .then(response => {
-            const dest = fs.createWriteStream(url);
-            response.body.pipe(dest);
-            response.body.on('end', () => {
-              setTimeout(() => {
-                components[service] = require(url).default;
-                console.log('file written');
-              }, 1000);
-            });
-          });
-      } else {
-        components[service] = require(url).default;
-        console.log('file exists');
-      }
-    });
-  });
-})();
-
 app.get('/listings', function(req, res) {
-  Promise.all([
-    axios.get('http://localhost:7000/renderDescription', {
-      params: {
-        id: req.query.id
-      }
-    })
-  ])
-    .then((results) => {
-      let htmls = [];
-      let props = [];
-      let flag = true;
-      results.forEach(({data}) => {
-        if (data.success === false) {
-          flag = false;
-        } else {
-          htmls.push(data.ssr_html);
-          props.push(data.props);
-        }
-      });
-      if (flag) {
-        res.end(`
-          <!DOCTYPE html>
-          <html lang="en">
-          <head>
-            <meta charset="UTF-8">
-            <title>TopBunk</title>
-            <link rel="stylesheet" type="text/css" href="/styles.css">
-            <!-- <link rel="stylesheet" type="text/css" href="http://18.216.104.91/guestBar.css"> -->
-            <!-- <link type="text/css" rel="stylesheet" href="http://18.218.27.164/style.css"> -->
-            <link rel="icon" type="image/png" href="https://s3.us-east-2.amazonaws.com/topbunk-profilephotos/favicon.ico">
-          </head>
-          <body>
-            <div id="description">${htmls[0]}</div>
-            <div class="container-left">
-              <div id="reviews"></div>
-              <div id="neighborhood"></div>
-            </div>
-            <div class=container-right>
-              <div id="booking"></div>
-            </div>
-            <script crossorigin src="https://unpkg.com/react@16.6.3/umd/react.development.js"></script>
-            <script crossorigin src="https://unpkg.com/react-dom@16.6.3/umd/react-dom.development.js"></script>
-            <script src="./bundles/Description.js"></script>
-            <script>
-              ReactDOM.hydrate(
-                React.createElement(Description, ${props[0]}),
-                document.getElementById('description')
-              );
-            </script>
-          </body>
-          </html>
-        `);
-      } else {
-        res.status(404).send();
-      }
-    });
+  client.get(req.query.id, (err, result) => {
+    if (err) {
+      console.log(err);
+    } else if (result) {
+      res.send(result);
+    } else {
+      Promise.all([
+        axios.get(`${process.env.description || require('./config.js').description}/renderDescription`, {
+          params: {
+            id: req.query.id
+          },
+          timeout: 10000
+        })
+          .catch((err) => {
+            console.log(err);
+          }),
+        axios.get(`${process.env.reviews || require('./config.js').reviews}/renderReviews`, {
+          params: {
+            id: req.query.id
+          },
+          timeout: 10000
+        })
+          .catch((err) => {
+            console.log(err);
+          }),,
+        axios.get(`${process.env.neighborhoodRender || require('./config.js').neighborhoodRender}/renderNeighbs`, {
+          params: {
+            id: req.query.id
+          },
+          timeout: 10000
+        })
+          .catch((err) => {
+            console.log(err);
+          }),,
+        axios.get(`${process.env.booking || require('./config.js').booking}/renderBooking`, {
+          params: {
+            id: req.query.id
+          },
+          timeout: 10000
+        })
+          .catch((err) => {
+            console.log(err);
+          }),
+      ])
+        .then((results) => {
+          let htmls = [];
+          let props = [];
+          let flag = true;
+          results.forEach((results) => {
+            console.log(results);
+            let data;
+            if (results === undefined) {
+              data = {ssr_html: '<div></div>', props: undefined};
+            } else {
+              data = results.data;
+            }
+            if (data.success === false) {
+              flag = false;
+            } else {
+              htmls.push(data.ssr_html);
+              props.push(data.props);
+            }
+          });
+          if (flag) {
+            let template = `
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+              <meta charset="UTF-8">
+              <title>TopBunk</title>
+              <link rel="stylesheet" type="text/css" href="/styles.css">
+              <link rel="stylesheet" type="text/css" href="${process.env.booking || require('./config.js').booking}/guestBar.css">
+              <link rel="stylesheet" type="text/css" href="${process.env.booking || require('./config.js').booking}/flexboxgrid2.css">
+              <link rel="stylesheet" type="text/css" href="${process.env.booking || require('./config.js').booking}/_datepicker.css">
+              <link type="text/css" rel="stylesheet" href="${process.env.reviews || require('./config.js').reviews}/style.css">
+              <link rel="icon" type="image/png" href="https://s3.us-east-2.amazonaws.com/topbunk-profilephotos/favicon.ico">
+            </head>
+            <body>
+              <div class="container-left">
+                <div id="description">${htmls[0]}</div>
+                <div id="reviews">${htmls[1]}</div>
+                <div id="neighborhood">${htmls[2]}</div>
+              </div>
+              <div class=container-right>
+                <div id="booking">${htmls[3]}</div>
+              </div>
+              <script crossorigin src="https://unpkg.com/react@16.6.3/umd/react.development.js"></script>
+              <script crossorigin src="https://unpkg.com/react-dom@16.6.3/umd/react-dom.development.js"></script>
+              <script src="http://localhost:7000/bundle.js"></script>
+              <script src="https://s3.us-east-2.amazonaws.com/topbunk-profilephotos/client-bundle.js"></script>
+              <script src="${process.env.neighborhood || require('./config.js').neighborhood}/app.js"></script>
+              <script src="https://s3.amazonaws.com/topbunk/bundle.js"></script>
+              <script>
+                ReactDOM.hydrate(
+                  React.createElement(Description, ${props[0]}),
+                  document.getElementById('description')
+                );
+              </script>
+              <script>
+                ReactDOM.hydrate(
+                  React.createElement(Reviews, ${props[1]}),
+                  document.getElementById('reviews')
+                );
+              </script>
+              <script>
+                ReactDOM.hydrate(
+                  React.createElement(Neighborhood, ${props[2]}),
+                  document.getElementById('neighborhood')
+                );
+              </script>
+              <script>
+                ReactDOM.hydrate(
+                  React.createElement(Booking, ${JSON.stringify(props[3])}),
+                  document.getElementById('booking')
+                );
+              </script>
+            </body>
+            </html>
+            `;
+            client.set(req.query.id, template);
+            res.send(template);
+          } else {
+            res.status(404).send();
+          }
+        });
+    }
+  });
+  // Promise.all([
+  //   axios.get(`${process.env.description || require('./config.js').description}/renderDescription`, {
+  //     params: {
+  //       id: req.query.id
+  //     },
+  //     timeout: 10000
+  //   })
+  //     .catch((err) => {
+  //       console.log(err);
+  //     }),
+  //   axios.get(`${process.env.reviews || require('./config.js').reviews}/renderReviews`, {
+  //     params: {
+  //       id: req.query.id
+  //     },
+  //     timeout: 10000
+  //   })
+  //     .catch((err) => {
+  //       console.log(err);
+  //     }),,
+  //   axios.get(`${process.env.neighborhoodRender || require('./config.js').neighborhoodRender}/renderNeighbs`, {
+  //     params: {
+  //       id: req.query.id
+  //     },
+  //     timeout: 10000
+  //   })
+  //     .catch((err) => {
+  //       console.log(err);
+  //     }),,
+  //   axios.get(`${process.env.booking || require('./config.js').booking}/renderBooking`, {
+  //     params: {
+  //       id: req.query.id
+  //     },
+  //     timeout: 10000
+  //   })
+  //     .catch((err) => {
+  //       console.log(err);
+  //     }),
+  // ])
+  //   .then((results) => {
+  //     let htmls = [];
+  //     let props = [];
+  //     let flag = true;
+  //     results.forEach((results) => {
+  //       console.log(results);
+  //       let data;
+  //       if (results === undefined) {
+  //         data = {ssr_html: '<div></div>', props: undefined};
+  //       } else {
+  //         data = results.data;
+  //       }
+  //       if (data.success === false) {
+  //         flag = false;
+  //       } else {
+  //         htmls.push(data.ssr_html);
+  //         props.push(data.props);
+  //       }
+  //     });
+  //     if (flag) {
+  //       res.end(`
+  //         <!DOCTYPE html>
+  //         <html lang="en">
+  //         <head>
+  //           <meta charset="UTF-8">
+  //           <title>TopBunk</title>
+  //           <link rel="stylesheet" type="text/css" href="/styles.css">
+  //           <link rel="stylesheet" type="text/css" href="${process.env.booking || require('./config.js').booking}/guestBar.css">
+  //           <link rel="stylesheet" type="text/css" href="${process.env.booking || require('./config.js').booking}/flexboxgrid2.css">
+  //           <link rel="stylesheet" type="text/css" href="${process.env.booking || require('./config.js').booking}/_datepicker.css">
+  //           <link type="text/css" rel="stylesheet" href="${process.env.reviews || require('./config.js').reviews}/style.css">
+  //           <link rel="icon" type="image/png" href="https://s3.us-east-2.amazonaws.com/topbunk-profilephotos/favicon.ico">
+  //         </head>
+  //         <body>
+  //           <div class="container-left">
+  //             <div id="description">${htmls[0]}</div>
+  //             <div id="reviews">${htmls[1]}</div>
+  //             <div id="neighborhood">${htmls[2]}</div>
+  //           </div>
+  //           <div class=container-right>
+  //             <div id="booking">${htmls[3]}</div>
+  //           </div>
+  //           <script crossorigin src="https://unpkg.com/react@16.6.3/umd/react.development.js"></script>
+  //           <script crossorigin src="https://unpkg.com/react-dom@16.6.3/umd/react-dom.development.js"></script>
+  //           <script src="https://s3.amazonaws.com/topbunk-nyc-description/bundle.js"></script>
+  //           <script src="https://s3.us-east-2.amazonaws.com/topbunk-profilephotos/client-bundle.js"></script>
+  //           <script src="${process.env.neighborhood || require('./config.js').neighborhood}/app.js"></script>
+  //           <script src="https://s3.amazonaws.com/topbunk/bundle.js"></script>
+  //           <script>
+  //             ReactDOM.hydrate(
+  //               React.createElement(Description, ${props[0]}),
+  //               document.getElementById('description')
+  //             );
+  //           </script>
+  //           <script>
+  //             ReactDOM.hydrate(
+  //               React.createElement(Reviews, ${props[1]}),
+  //               document.getElementById('reviews')
+  //             );
+  //           </script>
+  //           <script>
+  //             ReactDOM.hydrate(
+  //               React.createElement(Neighborhood, ${props[2]}),
+  //               document.getElementById('neighborhood')
+  //             );
+  //           </script>
+  //           <script>
+  //             ReactDOM.hydrate(
+  //               React.createElement(Booking, ${JSON.stringify(props[3])}),
+  //               document.getElementById('booking')
+  //             );
+  //           </script>
+  //         </body>
+  //         </html>
+  //       `);
+  //     } else {
+  //       res.status(404).send();
+  //     }
+  //   });
 });
 
 const loaderio = process.env.loaderio || require('./config.js').loader;

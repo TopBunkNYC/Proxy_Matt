@@ -4,35 +4,51 @@
   <meta charset="UTF-8">
   <title>TopBunk</title>
   <link rel="stylesheet" type="text/css" href="/styles.css">
-  <!-- <link rel="stylesheet" type="text/css" href="http://18.216.104.91/guestBar.css"> -->
-  <!-- <link type="text/css" rel="stylesheet" href="http://18.218.27.164/style.css"> -->
+  <link rel="stylesheet" type="text/css" href="${process.env.booking || require('./config.js').booking}/guestBar.css">
+  <link rel="stylesheet" type="text/css" href="${process.env.booking || require('./config.js').booking}/flexboxgrid2.css">
+  <link rel="stylesheet" type="text/css" href="${process.env.booking || require('./config.js').booking}/_datepicker.css">
+  <link type="text/css" rel="stylesheet" href="${process.env.reviews || require('./config.js').reviews}/style.css">
   <link rel="icon" type="image/png" href="https://s3.us-east-2.amazonaws.com/topbunk-profilephotos/favicon.ico">
 </head>
 <body>
-  <div id="description"></div>
-  <div class="container-left">
-    <div id="reviews"></div>
-    <div id="neighborhood"></div>
-  </div>
-  <div class=container-right>
-    <div id="booking"></div>
+  <div class="mega-container">
+    <div class="container-left">
+      <div id="description"></div>
+      <div id="reviews"></div>
+      <div id="neighborhood"></div>
+    </div>
+    <div class=container-right>
+      <div id="booking"></div>
+    </div>
   </div>
   <script crossorigin src="https://unpkg.com/react@16.6.3/umd/react.development.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@16.6.3/umd/react-dom.development.js"></script>
-  <script src="http://localhost:7000/bundle.js"></script>
-  <!-- <script src="http://52.14.238.117/bundle.js"></script> -->
-  <!-- <script src="http://18.216.104.91/bundle.js"></script> -->
-  <!-- <script src="http://18.218.27.164/bundle.js"></script> -->
-  <!-- <script>
-    ReactDOM.render(
+  <script src="https://s3.amazonaws.com/topbunk-nyc-description/bundle.js"></script>
+  <script src="https://s3.us-east-2.amazonaws.com/topbunk-profilephotos/client-bundle.js"></script>
+  <script src="${process.env.neighborhood || require('./config.js').neighborhood}/app.js"></script>
+  <script src="https://s3.amazonaws.com/topbunk/bundle.js"></script>
+  <script>
+    ReactDOM.hydrate(
+      React.createElement(Description),
+      document.getElementById('description')
+    );
+  </script>
+  <script>
+    ReactDOM.hydrate(
+      React.createElement(Reviews),
+      document.getElementById('reviews')
+    );
+  </script>
+  <script>
+    ReactDOM.hydrate(
       React.createElement(Neighborhood),
       document.getElementById('neighborhood')
     );
-  </script> -->
+  </script>
   <script>
-    ReactDOM.render(
-      React.createElement(Description),
-      document.getElementById('description')
+    ReactDOM.hydrate(
+      React.createElement(Booking),
+      document.getElementById('booking')
     );
   </script>
 </body>

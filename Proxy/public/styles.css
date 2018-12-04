@@ -1,11 +1,16 @@
 body {
   font-size: 16px;
-  font-family: 'Roboto', sans-serif;
+  font-family: "Roboto", sans-serif;
   line-height: 22px;
   letter-spacing: normal;
   color: #484848;
   font-weight: normal;
   background-color: #fff;
+}
+
+.mega-container {
+  margin: auto;
+  width: 80%;
 }
 
 a {
@@ -23,20 +28,31 @@ a:hover {
 
 .container-left {
   float: left;
-  padding-left: 24px;
-  width: 55%;
+  width: 58.3%;
 }
 
 .container-right {
   float: right;
   position: fixed;
-  left: 760px;
-  top: 20px;
-  right: 5%;
+  /* left: 760px; */
+  right: 12.5%;
+  top: 24px;
 }
 
 #description {
-  margin-left: -94.5px;
   margin-top: 20px;
   margin-bottom: 5px;
+}
+
+#sectionTitle {
+  width: 60% !important;
+}
+
+#booking {
+  padding-left: 7%;
+}
+
+.searchBar {
+  margin-left: 15px !important;
+  width: 82% !important;
 }
