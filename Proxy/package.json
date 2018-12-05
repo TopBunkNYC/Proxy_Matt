@@ -1,5 +1,5 @@
 {
-  "name": "proxy_matt",
+  "name": "proxy",
   "version": "1.0.0",
   "description": "Proxy to serve TopBunk application",
   "main": "server.js",
@@ -11,7 +11,10 @@
     "type": "git",
     "url": "git+https://github.com/TopBunkNYC/Proxy_Matt.git"
   },
-  "author": "MLJ",
+  "author": "DHP",
+  "contributors": [
+    "MLJ"
+  ],
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/TopBunkNYC/Proxy_Matt/issues"

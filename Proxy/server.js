@@ -1,12 +1,12 @@
 const express = require('express');
 const path = require('path');
 const axios = require('axios');
-// const redis = require('redis');
+const redis = require('redis');
 const parser = require('body-parser');
 const app = express();
 const port = 7001;
 
-// const client = redis.createClient({host: `${process.env.redis || require('./config.js').redis}`});
+const client = redis.createClient({host: `${process.env.redis || require('./config.js').redis}`});
 
 app.use(parser.json());
 app.use(express.static(path.join(__dirname, '/public')));
@@ -152,7 +152,6 @@ app.get('/listings', function(req, res) {
           let props = [];
           let flag = true;
           results.forEach((results) => {
-            console.log(results);
             let data;
             if (results === undefined) {
               data = {ssr_html: '<div></div>', props: undefined};
@@ -273,7 +272,6 @@ app.get('/listings', function(req, res) {
   //     let props = [];
   //     let flag = true;
   //     results.forEach((results) => {
-  //       console.log(results);
   //       let data;
   //       if (results === undefined) {
   //         data = {ssr_html: '<div></div>', props: undefined};
